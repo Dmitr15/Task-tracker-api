@@ -1,59 +1,105 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+# Task Management API (Laravel 12)
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+Это демонстрационное API для управления задачами. Проект реализует стандартные CRUD-операции с использованием современных практик Laravel: контроллеры групп, валидацию данных, логирование и ограничение частоты запросов (throttling).
 
-## About Laravel
+## 🚀 Основные возможности
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+* **CRUD Операции**: Создание, просмотр, обновление и удаление задач.
+* **Безопасность**: Ограничение частоты запросов (Rate Limiting) для защиты API.
+* **Валидация**: Строгая проверка входящих данных на уровне контроллера.
+* **Логирование**: Каждое ключевое действие (создание, удаление и т.д.) записывается в системные логи.
+* **ORM**: Использование Eloquent для удобной работы с базой данных.
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+---
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+## 🛠 Технологический стек
 
-## Learning Laravel
+* **Framework**: Laravel 12
+* **Language**: PHP 8.2+
+* **Database**: Поддерживается любая БД, совместимая с Eloquent (MySQL, PostgreSQL, SQLite).
+* **Tools**: Eloquent ORM, Laravel Logging, Middleware.
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework. You can also check out [Laravel Learn](https://laravel.com/learn), where you will be guided through building a modern Laravel application.
+---
 
-If you don't feel like reading, [Laracasts](https://laracasts.com) can help. Laracasts contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
+## 📝 API Эндпоинты
 
-## Laravel Sponsors
+Все маршруты защищены посредником `throttle:10,1` (максимум 10 запросов в минуту).
 
-We would like to extend our thanks to the following sponsors for funding Laravel development. If you are interested in becoming a sponsor, please visit the [Laravel Partners program](https://partners.laravel.com).
+| Метод | Путь | Описание |
+| --- | --- | --- |
+| `GET` | `/api/v1/tasks` | Получить список всех задач (сортировка по дате создания). |
+| `POST` | `/api/v1/tasks` | Создать новую задачу. |
+| `GET` | `/api/v1/tasks/{id}` | Получить детальную информацию о конкретной задаче. |
+| `PATCH` | `/api/v1/tasks/{id}` | Частично обновить данные задачи. |
+| `DELETE` | `/api/v1/tasks/{id}` | Удалить задачу. |
 
-### Premium Partners
+---
 
-- **[Vehikl](https://vehikl.com)**
-- **[Tighten Co.](https://tighten.co)**
-- **[Kirschbaum Development Group](https://kirschbaumdevelopment.com)**
-- **[64 Robots](https://64robots.com)**
-- **[Curotec](https://www.curotec.com/services/technologies/laravel)**
-- **[DevSquad](https://devsquad.com/hire-laravel-developers)**
-- **[Redberry](https://redberry.international/laravel-development)**
-- **[Active Logic](https://activelogic.com)**
+## 📊 Структура данных (Task Model)
 
-## Contributing
+Модель `Task` включает следующие поля:
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+* `title` (string): Заголовок задачи (обязательно).
+* `description` (string): Подробное описание (необязательно).
+* `status` (boolean): Статус выполнения (по умолчанию `false`).
+* `created_at` / `updated_at`: Временные метки (автоматически).
 
-## Code of Conduct
+---
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
+## ⚙️ Особенности реализации
 
-## Security Vulnerabilities
+### 1. Безопасность и Throttling
 
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
+В файле `api.php` реализовано ограничение:
 
-## License
+```php
+Route::middleware(['throttle:10,1'])->group(function () {
+    // Маршруты API
+});
 
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+```
+
+Это предотвращает brute-force атаки и избыточную нагрузку на сервер.
+
+### 2. Валидация
+
+Контроллер `TasksController` использует метод `$request->validate()`. Например, при создании задачи проверяется максимальная длина описания (1024 символа), что предотвращает переполнение БД.
+
+### 3. Логирование
+
+Для мониторинга работы приложения используется фасад `Log`. Каждое действие сохраняет ID задачи в логи:
+
+```php
+Log::info("Task created successfully", ['id' => $task->id]);
+
+```
+
+### 4. Приведение типов (Casting)
+
+В модели `Task.php` настроено автоматическое приведение поля `status` к типу `boolean`, что гарантирует корректную работу с данными на стороне фронтенда.
+
+---
+
+## 🚀 Установка
+
+1. Склонируйте репозиторий.
+2. Установите зависимости:
+```bash
+composer install
+
+```
+
+
+3. Настройте файл `.env` (база данных).
+4. Запустите миграции:
+```bash
+php artisan migrate
+
+```
+
+
+5. Запустите сервер:
+```bash
+php artisan serve
+
+```
